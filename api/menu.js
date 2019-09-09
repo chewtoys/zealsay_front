@@ -71,25 +71,76 @@ const Menu = [
       }
     ]
   },
+  { header: '站点配置' },
   {
-    title: '媒体',
-    group: 'media',
-    icon: 'panorama',
+    title: '站点主体',
+    group: 'article',
+    icon: 'mdi-home-circle',
     items: [
       {
+        name: 'write',
+        title: '基本信息',
+        component: 'articleadd',
+        href: '/admin/article/add'
+      },
+      {
         name: 'list',
-        title: '媒体库',
-        component: 'Dashboard',
-        href: '/admin/dashboard'
+        title: 'SEO配置',
+        component: 'articlelist',
+        href: '/admin/article/list'
       },
       {
         name: 'write',
-        title: '添加',
-        component: 'Dashboard',
-        href: '/admin/dashboard'
+        title: '对象云存储配置',
+        component: 'articleadd',
+        href: '/admin/article/add'
+      },
+      {
+        name: 'write',
+        title: '第三方登录配置',
+        component: 'articleadd',
+        href: '/admin/article/add'
+      }
+    ]
+  },
+  {
+    title: '友链管理',
+    group: 'article',
+    icon: 'mdi-link-variant',
+    items: [
+      {
+        name: 'write',
+        title: '友链列表',
+        component: 'friendlist',
+        href: '/admin/friendlink/list'
+      },
+      {
+        name: 'write',
+        title: '友链添加',
+        component: 'friendadd',
+        href: '/admin/friendlink/add'
       }
     ]
   }
+  // {
+  //   title: '媒体',
+  //   group: 'media',
+  //   icon: 'panorama',
+  //   items: [
+  //     {
+  //       name: 'list',
+  //       title: '媒体库',
+  //       component: 'Dashboard',
+  //       href: '/admin/dashboard'
+  //     },
+  //     {
+  //       name: 'write',
+  //       title: '添加',
+  //       component: 'Dashboard',
+  //       href: '/admin/dashboard'
+  //     }
+  //   ]
+  // }
 ]
 // reorder menu
 Menu.forEach(item => {

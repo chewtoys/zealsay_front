@@ -1,9 +1,57 @@
-<template>
+<template xmlns:v-slot="http://www.w3.org/1999/XSL/Transform">
   <v-dialog v-model="dialog" width="600" persistent>
     <v-card ref="row">
       <v-container fill-height fluid>
         <v-layout fill-height class="center">
           <v-flex xs12 align-center flexbox>
+            <v-dialog v-model="showCropper" persistent width="800px">
+              <template v-slot:activator="{ on }">
+                <label for="uploads">
+                  <a>
+                    <v-avatar size="96">
+                      <img :src="form.avatar" alt="avatar" />
+                    </v-avatar>
+                  </a>
+                </label>
+                <input
+                  id="uploads"
+                  ref="avator"
+                  type="file"
+                  style="display: none;"
+                  accept="image/png, image/jpeg, image/gif, image/jpg"
+                  @change="fileChange($event)"
+                />
+              </template>
+              <v-card>
+                <v-card-title>
+                  <div style="width: 800px;height: 400px;">
+                    <vueCropper
+                      ref="cropper"
+                      style="background-repeat:repeat"
+                      :output-size="option.outputSize"
+                      :output-type="option.outputType"
+                      :info="option.info"
+                      :can-scale="option.canScale"
+                      :can-move-box="option.canMoveBox"
+                      :center-box="option.centerBox"
+                      :auto-crop="option.autoCrop"
+                      :fixed="option.fixed"
+                      :fixed-number="option.fixedNumber"
+                      :img="option.img"
+                    ></vueCropper>
+                  </div>
+                </v-card-title>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn color="darken-1" outline @click="cropCancel"
+                    >返回</v-btn
+                  >
+                  <v-btn color="primary" outline @click="cropSubmit"
+                    >裁剪</v-btn
+                  >
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
             <h6 class="category text-gray ffont-weight-light mb-3">头像预览</h6>
             <p class="card-description font-weight-light">
               支持JPG、PNG格式图片，不超过5M。拖拽或缩放图中的虚线方格可调整头像
@@ -108,34 +156,24 @@ export default {
     name: 'edit',
     loading: false,
     file: '',
-    option: {
-      img: 'https://pan.zealsay.com/20190317010254129000000.jpg', // 裁剪图片的地址
-      info: true, // 裁剪框的大小信息
-      outputSize: 1, // 裁剪生成图片的质量
-      outputType: 'jpeg', // 裁剪生成图片的格式
-      canScale: true, // 图片是否允许滚轮缩放
-      autoCrop: true, // 是否默认生成截图框
-      canMoveBox: true, // 截图框能否拖动
-      centerBox: true, // 截图框能否拖动
-      autoCropWidth: 150, // 默认生成截图框宽度
-      autoCropHeight: 150, // 默认生成截图框高度
-      fixed: true, // 是否开启截图框宽高固定比例
-      fixedNumber: [4, 4] // 截图框的宽高比例
-    },
+    showCropper: false,
     sexs: [
       {
         value: 1,
         text: '男',
-        avatar:
-          '<img width="15px" src="../../../../../assets/image/sex/boy.png"/>'
+        avatar: '<img width="15px" src="@/static/image/sex/boy.png"/>'
       },
       {
         value: 0,
         text: '女',
-        avatar:
-          '<img width="15px" src="../../../../../assets/image/sex/girl.png"/>'
+        avatar: '<img width="15px" src="@/static/image/sex/girl.png"/>'
       }
     ],
+    valid: false,
+    clickable: true,
+    avatar: {
+      size: 128
+    },
     roles: [],
     usernameRules: [
       v => !!v || '用户名不能为空!',
@@ -161,11 +199,24 @@ export default {
         username: this.row.username
       }
     },
-    dialog: {
-      get: function() {
-        return this.alert
-      },
-      set: function() {}
+    option: function() {
+      return {
+        img:
+          this.form.avatar ||
+          'https://pan.zealsay.com/20190630225012780000000.jpg', // 裁剪图片的地址
+        info: true, // 裁剪框的大小信息
+        outputSize: 1, // 裁剪生成图片的质量
+        outputType: 'jpeg', // 裁剪生成图片的格式
+        canScale: true, // 图片是否允许滚轮缩放
+        autoCrop: true, // 是否默认生成截图框
+        canMoveBox: true, // 截图框能否拖动
+        centerBox: true, // 截图框能否拖动
+        fixed: true, // 是否开启截图框宽高固定比例
+        fixedNumber: [4, 4] // 截图框的宽高比例
+      }
+    },
+    dialog: function() {
+      return this.alert
     }
   },
   async asyncData({ app, query, error }) {
@@ -182,68 +233,43 @@ export default {
       return error({ statusCode: code, message: message })
     }
   },
+  created() {
+    if (!this.roles.length) {
+      this.$axios.$request(getRoleList()).then(res => {
+        if (res.code === '200') {
+          this.roles = res.data.map(r => {
+            return {
+              value: r.value,
+              text: r.name
+            }
+          })
+        } else {
+          this.$swal({
+            text: '拉取角色信息失败',
+            type: 'error',
+            toast: true,
+            position: 'top',
+            showConfirmButton: false,
+            timer: 3000
+          })
+        }
+      })
+    }
+  },
   methods: {
     handleCancel() {
       this.$emit('handleCancel')
     },
     handleSubmit(obj) {
       this.loading = true
-      if (this.$refs.form.validate()) {
-        // 先上传头像
-        if (!(this.file === '')) {
-          const param = new FormData()
-          // 获取截图的base64 数据
-          // this.$refs.cropper.getCropData((data) => {
-          //     // do something
-          //     console.log(data)
-          // });
-          // 获取截图的blob数据
-          this.$refs.cropper
-            .getCropBlob(data => {
-              // do something
-              const file = data
-              param.append('file', file, this.file.name)
-              uploadImage(param)
-                .then(res => {
-                  if (res.code === '200') {
-                    this.form.avatar = res.data
-                    this.save()
-                  } else {
-                    this.$swal({
-                      text: res.message,
-                      type: 'error',
-                      toast: true,
-                      position: 'top',
-                      showConfirmButton: false,
-                      timer: 3000
-                    })
-                  }
-                })
-                .catch(e => {
-                  this.$swal({
-                    text: e.message,
-                    type: 'error',
-                    toast: true,
-                    position: 'top',
-                    showConfirmButton: false,
-                    timer: 3000
-                  })
-                })
-            })
-            .finally(() => {
-              this.loading = false
-            })
-        } else {
-          this.save()
-        }
-      }
+      this.save()
     },
     save() {
       // 开始提交
-      editUser(this.form)
+      this.$axios
+        .$request(editUser(this.form))
         .then(res => {
           if (res.code === '200' && res.data) {
-            this.loading = false
             this.$swal({
               text: '修改成功',
               type: 'success',
@@ -267,7 +293,6 @@ export default {
           }
         })
         .catch(e => {
-          this.loading = false
           this.$swal({
             text: e.message,
             type: 'error',
@@ -281,44 +306,74 @@ export default {
           this.loading = false
         })
     },
-    fileChanged(file) {
-      if (!file.type.includes('image/')) {
-        this.$swal({
-          text: '请选择一张图片文件',
-          type: 'error',
-          toast: true,
-          position: 'top',
-          showConfirmButton: false,
-          timer: 3000
-        })
-        return
+    fileChange(e) {
+      // 上传图片
+      // this.option.img
+      const file = e.target.files[0]
+      if (!/\.(gif|jpg|jpeg|png|bmp|GIF|JPG|PNG)$/.test(e.target.value)) {
+        alert('图片类型必须是.gif,jpeg,jpg,png,bmp中的一种')
+        return false
       }
-      // handle file here. File will be an object.
-      // If multiple prop is true, it will return an object array of files.
-      const self = this
-      // 看支持不支持FileReader
-      if (!file || !window.FileReader) return
-      if (/^image/.test(file.type)) {
-        self.file = file
-        // 创建一个reader
-        const reader = new FileReader()
-        // 将图片将转成 base64 格式
-        reader.readAsDataURL(file)
-        // 读取成功后的回调
-        reader.onloadend = function() {
-          self.row.avatar = this.result
-          self.form.avatar = this.result
+      const reader = new FileReader()
+      reader.onload = e => {
+        let data
+        if (typeof e.target.result === 'object') {
+          // 把Array Buffer转化为blob 如果是base64不需要
+          data = window.URL.createObjectURL(new Blob([e.target.result]))
+        } else {
+          data = e.target.result
         }
-      } else {
-        this.$swal({
-          text: '要选择一张图片文件才行呢！',
-          type: 'error',
-          toast: true,
-          position: 'top',
-          showConfirmButton: false,
-          timer: 3000
-        })
+        this.option.img = data
+        this.showCropper = true
       }
+      // 转化为base64
+      // reader.readAsDataURL(file)
+      // 转化为blob
+      reader.readAsArrayBuffer(file)
+    },
+    cropCancel() {
+      this.showCropper = false
+      this.$refs.avator.value = ''
+    },
+    cropSubmit() {
+      this.showCropper = false
+      this.request()
+    },
+    request() {
+      // 获取截图的blob数据
+      this.$refs.cropper.getCropBlob(data => {
+        // do something
+        const file = data
+        const param = new FormData()
+        param.append('file', file)
+        this.$axios
+          .$request(uploadImage(param))
+          .then(res => {
+            if (res.code === '200') {
+              this.row.avatar = res.data
+            } else {
+              this.$swal({
+                text: res.message,
+                type: 'error',
+                toast: true,
+                position: 'top',
+                showConfirmButton: false,
+                timer: 3000
+              })
+            }
+          })
+          .catch(e => {
+            this.$swal({
+              text: e.message,
+              type: 'error',
+              toast: true,
+              position: 'top',
+              showConfirmButton: false,
+              timer: 3000
+            })
+          })
+          .finally(() => {})
+      })
     }
   }
 }

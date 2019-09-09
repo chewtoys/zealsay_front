@@ -1,18 +1,30 @@
 import VuetifyLoaderPlugin from 'vuetify-loader/lib/plugin'
-import pkg from './package'
 
 export default {
   mode: 'universal',
-
+  server: {
+    port: 4000 // default: 3000
+  },
   /*
    ** Headers of the page
    */
   head: {
-    title: pkg.name,
+    title: 'zealsay小站-为分享快乐而生',
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { hid: 'description', name: 'description', content: pkg.description }
+      {
+        hid: 'description',
+        name: 'description',
+        content:
+          'zealsay小站，是一个关注于互联网、IT技术经验分享的个人独立博客。专注于IT行业最前沿的技术。致力成为互联网上最个性、最极客、具传播力的个人独立博客。'
+      },
+      {
+        hid: 'keywords',
+        name: 'keywords',
+        content:
+          '全栈人生,全栈笔记,全栈工程师,全栈,zealsay,zealsay博客,zealsay说你想说,王者荣耀,游戏,盘点,个人博客,建站系统,生活杂记,随笔,WEB平台,BOX-ROM,BoxMod。'
+      }
     ],
     link: [
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
@@ -27,7 +39,10 @@ export default {
   /*
    ** Customize the progress-bar color
    */
-  loading: '~/components/material/loading.vue',
+  // loading: {
+  //   color: 'pink',
+  //   height: '4px'
+  // },
 
   /*
    ** Global CSS
@@ -35,23 +50,30 @@ export default {
   css: [
     'material-design-icons-iconfont/dist/material-design-icons.css',
     'vuetify/dist/vuetify.min.css',
-    '~/assets/style/app.styl',
+    '@/assets/style/app.styl',
     'chartist/dist/chartist.min.css',
-    '~/assets/scss/styles/index.scss'
+    '@/assets/scss/styles/index.scss'
   ],
 
   /*
    ** Plugins to load before mounting the App
    */
   plugins: [
-    { src: '~/plugins/vuetify', ssr: true },
-    { src: '~/plugins/axios', ssr: false },
-    { src: '~/plugins/dialog', ssr: false },
-    { src: '~/plugins/chartist', ssr: true },
-    { src: '~/plugins/vue-perfect-scrollbar', ssr: false },
-    { src: '~/plugins/vue-mavon-editor', srr: false }
+    { src: '@/plugins/vuetify', ssr: true },
+    { src: '@/plugins/axios', ssr: false },
+    { src: '@/plugins/dialog', ssr: false },
+    { src: '@/plugins/chartist', ssr: true },
+    { src: '@/plugins/vue-perfect-scrollbar', ssr: false },
+    { src: '@/plugins/vue-mavon-editor', srr: false },
+    { src: '@/plugins/vue-cropper', ssr: false },
+    { src: '@/plugins/bubbly-bg', ssr: false },
+    { src: '@/plugins/localStorage.js', ssr: false }
   ],
 
+  /**
+   * 禁用加载进度条
+   */
+  loading: false,
   /*
    ** Nuxt.js modules
    */
@@ -59,16 +81,17 @@ export default {
     // Doc: https://axios.nuxtjs.org/usage
     '@nuxtjs/axios',
     '@nuxtjs/auth',
-    '@nuxtjs/pwa',
     [
       'vue-sweetalert2/nuxt',
       {
         buttonsStyling: false,
         heightAuto: false,
         grow: true,
-        confirmButtonClass: 'mx-4 v-btn v-btn--round primary',
+        customClass: {
+          confirmButton: 'mx-4 v-btn v-btn--round primary',
+          cancelButton: 'mx-4 v-btn v-btn--round default'
+        },
         confirmButtonText: '确定',
-        cancelButtonClass: 'mx-4 v-btn v-btn--round default',
         cancelButtonText: '取消'
       }
     ]
@@ -115,19 +138,20 @@ export default {
    */
   axios: {
     // See https://github.com/nuxt-community/axios-module#options
-    // baseURL: 'https://www.zealsay.com', // 生产环境打开
+    // baseURL: process.env.apiUrl, // 代理请求域名
     // https: true, // 开启https
     prefix: '/app/', // 给路径加个前缀
     proxy: true, // Can be also an object with default options
     credentials: true, // 表示跨域请求时候是否需要携带凭证
     retry: { retries: 3 }, // 超时重试3次
-    progress: true, // 请求的时候是否加载loading页面
-    debug: true // 开启调试，线上关闭
+    progress: false, // 请求的时候是否加载loading页面
+    debug: false // 开启调试，线上关闭
   },
 
   proxy: {
     '/app/': {
-      target: 'http://localhost:8090', // 目标接口域名
+      target: 'https://api.zealsay.com', // 目标接口域名
+      // target: 'http://localhost:8090', // 目标接口域名
       changeOrigin: true, // 是否跨域
       pathRewrite: { '^/app/': '' } // 把/api 替换成 /
     }
@@ -157,6 +181,7 @@ export default {
           exclude: /(node_modules)/
         })
       }
-    }
+    },
+    vendor: ['axios']
   }
 }

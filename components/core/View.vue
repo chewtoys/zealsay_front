@@ -10,7 +10,7 @@
 </template>
 
 <script>
-import Footer from '~/components/core/Footer'
+import Footer from '@/components/core/Footer'
 export default {
   components: {
     'core-footer': Footer
@@ -25,6 +25,6 @@ export default {
 
 <style scoped>
 #core-view {
-  padding-bottom: 100px;
+  padding-bottom: 200px;
 }
 </style>

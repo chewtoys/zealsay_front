@@ -112,9 +112,9 @@
 </template>
 
 <script>
+import addForm from './components/addForm'
 import { getCategoryList, updateCategory, deleteCategory } from '@/api/article'
 import { validateAlias, validateUsername } from '@/util/validate'
-import addForm from './components/addForm'
 
 export default {
   name: 'Category',
@@ -146,9 +146,19 @@ export default {
       ]
     },
     selected() {
-      if (!this.active.length) return {}
+      if (!this.active.length)
+        return {
+          name: '',
+          alias: ''
+        }
       const id = this.active[0]
       if (id === undefined) {
+        return {
+          name: '分类目录',
+          alias: 'alias'
+        }
+      }
+      if (this.categorys.find(category => category.id === id) === undefined) {
         return {
           name: '分类目录',
           alias: 'alias'
